@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#0e0f12">
+<meta name="referrer" content="no-referrer">
+<title>Sentinel — anti-arnaque</title>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+
+<style>
+  :root {
+    --bg: #0e0f12;
+    --surface: #16181d;
+    --surface-2: #1d2027;
+    --border: #2a2d35;
+    --text: #e8e9ec;
+    --muted: #8b8f99;
+    --accent: #6ea8fe;
+    --danger: #ef4444;
+    --warn: #f59e0b;
+    --ok: #10b981;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  html, body { background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; min-height: 100vh; overscroll-behavior: none; }
+  body { padding-bottom: 80px; }
+
+  header {
+    padding: 18px 20px 8px;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface);
+  }
+  header h1 { font-size: 22px; font-weight: 700; }
+  header p { color: var(--muted); font-size: 13px; margin-top: 2px; }
+
+  nav.tabs {
+    display: flex;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    position: sticky; top: 0; z-index: 10;
+  }
+  nav.tabs button {
+    flex: 1;
+    background: transparent;
+    border: none;
+    color: var(--muted);
+    padding: 14px 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+  }
+  nav.tabs button.active {
+    color: var(--text);
+    border-bottom-color: var(--accent);
+  }
+
+  main { padding: 16px 16px 0; }
+  .panel { display: none; }
+  .panel.active { display: block; }
+
+  textarea, input[type="text"] {
+    width: 100%;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--text);
+    border-radius: 10px;
+    padding: 14px 16px;
+    font-size: 16px;
+    font-family: inherit;
+    resize: vertical;
+  }
+  textarea { min-height: 120px; }
+  textarea:focus, input[type="text"]:focus { outline: none; border-color: var(--accent); }
+
+  .hint { color: var(--muted); font-size: 13px; margin: 6px 0 12px; }
+
+  button.primary {
+    width: 100%;
+    background: var(--accent);
+    color: var(--bg);
+    border: none;
+    border-radius: 10px;
+    padding: 16px;
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+    margin-top: 12px;
+  }
+  button.primary:active { opacity: 0.7; }
+
+  .verdict {
+    margin-top: 18px;
+    padding: 18px 20px;
+    border-radius: 12px;
+    border-left: 4px solid;
+  }
+  .verdict.danger { background: rgba(239, 68, 68, 0.08); border-left-color: var(--danger); }
+  .verdict.warn { background: rgba(245, 158, 11, 0.08); border-left-color: var(--warn); }
+  .verdict.ok { background: rgba(16, 185, 129, 0.08); border-left-color: var(--ok); }
+  .verdict h3 { font-size: 18px; margin-bottom: 8px; }
+  .verdict.danger h3 { color: var(--danger); }
+  .verdict.warn h3 { color: var(--warn); }
+  .verdict.ok h3 { color: var(--ok); }
+  .verdict ul { margin-top: 8px; padding-left: 20px; }
+  .verdict li { margin: 4px 0; color: var(--muted); font-size: 14px; }
+  .verdict .reason { color: var(--text); font-size: 15px; line-height: 1.5; }
+
+  .scam-list { margin-top: 14px; }
+  .scam-item {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px 16px;
+    margin-bottom: 10px;
+  }
+  .scam-item h3 { font-size: 15px; margin-bottom: 4px; }
+  .scam-item .meta { color: var(--muted); font-size: 12px; margin-bottom: 8px; }
+  .scam-item .desc { font-size: 14px; line-height: 1.5; color: var(--text); }
+  .scam-item .badge {
+    display: inline-block;
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 999px;
+    font-weight: 600;
+    margin-left: 6px;
+  }
+  .badge.sms { background: rgba(110, 168, 254, 0.18); color: var(--accent); }
+  .badge.call { background: rgba(245, 158, 11, 0.18); color: var(--warn); }
+  .badge.mail { background: rgba(16, 185, 129, 0.18); color: var(--ok); }
+  .badge.url { background: rgba(239, 68, 68, 0.18); color: var(--danger); }
+
+  .refresh-row { display: flex; justify-content: space-between; align-items: center; margin: 8px 0 14px; }
+  .refresh-row .updated { color: var(--muted); font-size: 12px; }
+  .refresh-row button { background: var(--surface-2); color: var(--text); border: 1px solid var(--border); padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 12px; }
+
+  footer { padding: 30px 20px; color: var(--muted); font-size: 12px; text-align: center; }
+  footer a { color: var(--muted); }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Sentinel</h1>
+  <p>Colle un SMS, un email, un numéro ou un lien — l'app te dit si ça ressemble à une arnaque connue.</p>
+</header>
+
+<nav class="tabs">
+  <button class="active" data-tab="scan">Scanner</button>
+  <button data-tab="live">Arnaques en cours</button>
+  <button data-tab="about">À propos</button>
+</nav>
+
+<main>
+
+  <!-- ─────────── SCANNER ─────────── -->
+  <section class="panel active" id="panel-scan">
+    <textarea id="input" placeholder="Colle ici le SMS, l'email, le numéro ou le lien à vérifier…" autofocus></textarea>
+    <p class="hint">Tout reste sur ton téléphone. Aucune donnée envoyée.</p>
+    <button class="primary" onclick="analyze()">Vérifier</button>
+    <div id="verdict"></div>
+  </section>
+
+  <!-- ─────────── ARNAQUES EN COURS ─────────── -->
+  <section class="panel" id="panel-live">
+    <div class="refresh-row">
+      <span class="updated" id="last-updated">Chargement…</span>
+      <button onclick="loadScams(true)">Actualiser</button>
+    </div>
+    <div class="scam-list" id="scam-list"></div>
+  </section>
+
+  <!-- ─────────── À PROPOS ─────────── -->
+  <section class="panel" id="panel-about">
+    <h2 style="font-size: 18px; margin-bottom: 12px;">Comment ça marche</h2>
+    <p style="color: var(--muted); font-size: 14px; line-height: 1.6; margin-bottom: 16px;">
+      Sentinel compare ce que tu colles à des règles et à une liste d'arnaques connues, mise à jour régulièrement. Tout se passe sur ton téléphone — rien n'est envoyé.
+    </p>
+
+    <h3 style="font-size: 15px; margin-bottom: 8px;">Important</h3>
+    <p style="color: var(--muted); font-size: 14px; line-height: 1.6; margin-bottom: 16px;">
+      Sentinel <strong>n'est pas une protection absolue</strong>. C'est une aide à la décision. Une nouvelle arnaque peut passer entre les mailles. <strong>Tu restes seul juge</strong> de tes actions (appeler, cliquer, payer…).
+    </p>
+
+    <h3 style="font-size: 15px; margin-bottom: 8px;">Données collectées</h3>
+    <p style="color: var(--muted); font-size: 14px; line-height: 1.6; margin-bottom: 16px;">
+      <strong>AUCUNE.</strong> Aucun compte, aucun tracking, aucune publicité. La seule requête réseau est un GET anonyme toutes les 6h pour mettre à jour la liste des arnaques. Cette requête ne contient ni identifiant ni les données que tu scannes.
+    </p>
+
+    <h3 style="font-size: 15px; margin-bottom: 8px;">Responsabilité</h3>
+    <p style="color: var(--muted); font-size: 14px; line-height: 1.6; margin-bottom: 16px;">
+      L'auteur ne saurait être tenu pour responsable d'un faux positif (alerte injustifiée) ou d'un faux négatif (arnaque non détectée). En cas de doute, refuse, raccroche, ne clique pas et contacte directement l'organisme via ses canaux officiels.
+    </p>
+
+    <h3 style="font-size: 15px; margin-bottom: 8px;">Licence</h3>
+    <p style="color: var(--muted); font-size: 14px; line-height: 1.6;">
+      © Sentinel · Tous droits réservés. Code et marque non réutilisables sans autorisation écrite.
+    </p>
+  </section>
+
+</main>
+
+<footer>
+  Sentinel v0.1 · Aucune donnée n'est collectée
+</footer>
+
+<script src="rules.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

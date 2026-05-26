@@ -1,0 +1,30 @@
+Sentinel — Tous droits réservés (All Rights Reserved)
+Copyright © 2026 Naoufel (nefesec)
+
+Le code source de cette application, sa marque (« Sentinel »), son
+identité visuelle et sa documentation sont protégés.
+
+INTERDICTIONS :
+  - Toute reproduction, totale ou partielle, de ce code, sous quelque
+    forme et sur quelque support que ce soit, est interdite sans
+    autorisation écrite préalable de l'auteur.
+  - Toute redistribution du code source, des binaires ou d'œuvres
+    dérivées (fork, modification, repackaging) est interdite.
+  - Toute commercialisation, sous quelque forme, est interdite.
+  - L'utilisation de la marque « Sentinel » pour identifier une
+    application similaire est interdite.
+
+ABSENCE DE GARANTIE :
+  Le logiciel est fourni "EN L'ÉTAT", sans garantie d'aucune sorte,
+  explicite ou implicite. L'auteur ne saurait être tenu pour
+  responsable :
+    - d'un faux positif (alerte injustifiée) ;
+    - d'un faux négatif (arnaque non détectée par l'outil) ;
+    - de tout dommage direct ou indirect résultant de l'utilisation
+      ou de l'impossibilité d'utiliser le logiciel.
+  L'utilisateur reste seul juge et responsable des actions qu'il
+  décide de prendre en fonction des informations fournies par le
+  logiciel.
+
+DROIT APPLICABLE :
+  Droit français. Tribunaux compétents : ceux du domicile de l'auteur.
