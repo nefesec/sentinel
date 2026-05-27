@@ -1,7 +1,7 @@
 // Service Worker minimal pour fonctionnement offline.
 // Cache les assets statiques (sauf scams.json qui doit rester à jour).
 
-const CACHE = 'sentinel-v2';
+const CACHE = 'sentinel-v3';
 const ASSETS = [
   './',
   './index.html',

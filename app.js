@@ -15,16 +15,34 @@ const LOGS_MAX = 50;
 // ══════════════════════════════════════════════════════════
 
 function setTab(name) {
-  document.querySelectorAll('.tab-link').forEach(a => {
+  // Mobile nav : active = bg cyan + border + shadow blanc (style Stitch exact)
+  document.querySelectorAll('#nav-mobile .tab-link').forEach(a => {
     const active = a.dataset.tab === name;
     if (active) {
-      a.classList.add('text-primary-container');
+      a.classList.add('bg-primary-container', 'text-on-primary-container', 'border-border-width-thin', 'border-primary', 'shadow-[2px_2px_0px_0px_#ffffff]');
       a.classList.remove('text-secondary');
+      a.querySelector('span.material-symbols-outlined')?.setAttribute('style', "font-variation-settings: 'FILL' 1;");
+      a.querySelector('span:not(.material-symbols-outlined)')?.classList.add('font-bold');
     } else {
-      a.classList.remove('text-primary-container');
+      a.classList.remove('bg-primary-container', 'text-on-primary-container', 'border-border-width-thin', 'border-primary', 'shadow-[2px_2px_0px_0px_#ffffff]');
       a.classList.add('text-secondary');
+      a.querySelector('span.material-symbols-outlined')?.removeAttribute('style');
+      a.querySelector('span:not(.material-symbols-outlined)')?.classList.remove('font-bold');
     }
   });
+
+  // Desktop nav : active = text-primary + border-bottom cyan
+  document.querySelectorAll('#nav-desktop .tab-link').forEach(a => {
+    const active = a.dataset.tab === name;
+    if (active) {
+      a.classList.add('text-primary', 'border-b-border-width-thin', 'border-primary');
+      a.classList.remove('text-on-surface-variant', 'dark:text-on-surface-variant');
+    } else {
+      a.classList.remove('text-primary', 'border-b-border-width-thin', 'border-primary');
+      a.classList.add('text-on-surface-variant', 'dark:text-on-surface-variant');
+    }
+  });
+
   document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
   document.getElementById('panel-' + name).classList.add('active');
   window.scrollTo(0, 0);
@@ -226,35 +244,60 @@ function renderShield(data) {
   const updated = document.getElementById('shield-updated');
   if (data._fetchedAt) {
     const d = new Date(data._fetchedAt);
-    updated.textContent = `MAJ : ${d.toLocaleString('fr-FR', { dateStyle: 'short', timeStyle: 'short' })}`;
+    updated.textContent = `MAJ: ${d.toLocaleString('fr-FR', { dateStyle: 'short', timeStyle: 'short' })}`;
   }
   const list = document.getElementById('shield-list');
   if (!data.alerts?.length) {
-    list.innerHTML = emptyCard('AUCUNE ALERTE', 'Aucune arnaque active signalée actuellement.');
+    list.innerHTML = `<div class="brutal-border-thin bg-surface-container-low p-6 text-center"><div class="font-label-mono text-label-mono uppercase text-primary mb-1">AUCUNE ALERTE</div><div class="font-body-md text-on-surface-variant">Aucune arnaque active signalée actuellement.</div></div>`;
     return;
   }
 
-  const colorByKind = { sms: 'scam-card-cyan', call: 'scam-card-red', mail: 'scam-card-yellow', url: 'scam-card-red' };
-  const labelByKind = { sms: 'SMS', call: 'APPEL', mail: 'EMAIL', url: 'SITE WEB' };
+  const labelByKind = { sms: 'SMS', call: 'APPEL', mail: 'EMAIL', url: 'SITE' };
   const badgeBg = { sms: '#00fbfb', call: '#ff3a3a', mail: '#fce442', url: '#ff3a3a' };
   const badgeFg = { sms: '#003737', call: '#ffffff', mail: '#131313', url: '#ffffff' };
+  const borderByKind = { sms: '#ffffff', call: '#ff3a3a', mail: '#fce442', url: '#ff3a3a' };
 
-  list.innerHTML = data.alerts.map(a => `
-    <div class="brutal-border-thin bg-surface-container-low ${colorByKind[a.kind] || ''}">
-      <div class="flex justify-between items-center px-4 py-3 border-b-border-width-thin border-surface-container-highest">
-        <h3 class="font-headline-md text-headline-md text-primary uppercase tracking-tight">${escapeHtml(a.title.toUpperCase())}</h3>
-        <span class="font-label-mono text-[10px] uppercase px-2 py-1 tracking-widest" style="background:${badgeBg[a.kind]};color:${badgeFg[a.kind]}">${labelByKind[a.kind] || a.kind.toUpperCase()}</span>
-      </div>
-      <div class="px-2 py-2">
-        <div class="info-row"><span class="lbl font-label-mono text-xs uppercase">VECTEUR</span><span class="val font-label-mono text-xs uppercase">${escapeHtml(a.vector || labelByKind[a.kind])}</span></div>
-        <div class="info-row"><span class="lbl font-label-mono text-xs uppercase">CIBLE</span><span class="val font-label-mono text-xs uppercase">${escapeHtml(a.target || 'PARTICULIERS')}</span></div>
-        <div class="info-row"><span class="lbl font-label-mono text-xs uppercase">RISQUE</span><span class="val font-label-mono text-xs uppercase">${escapeHtml(a.risk || (a.kind === 'sms' || a.kind === 'url' ? 'ÉLEVÉ' : 'CRITIQUE'))}</span></div>
-        ${a.date ? `<div class="info-row"><span class="lbl font-label-mono text-xs uppercase">DÉTECTÉ</span><span class="val font-label-mono text-xs uppercase">${escapeHtml(a.date.toUpperCase())}</span></div>` : ''}
-      </div>
-      ${a.example ? `<div class="mx-4 mb-3"><div class="quote-block font-body-md">« ${escapeHtml(a.example)} »</div></div>` : ''}
-      <div class="font-body-md text-on-surface-variant px-4 pb-4">${escapeHtml(a.description)}</div>
-    </div>
+  // Format exact des cartes alertes_brutal Stitch :
+  // Header avec titre uppercase + badge
+  // Tableau 2 colonnes : VECTEUR/CIBLE/RISQUE/STATUS
+  // Citation en italique encadrée
+  // Footer "ANALYSER SOURCE →" cliquable
+  list.innerHTML = data.alerts.map((a, i) => `
+    <article class="brutal-border-thin bg-surface-container-low" style="border-color:${borderByKind[a.kind] || '#ffffff'}">
+      <header class="flex justify-between items-center px-4 py-3 border-b-border-width-thin border-surface-container-highest">
+        <h3 class="font-headline-md text-2xl text-primary uppercase tracking-tighter font-bold">${escapeHtml(a.title.toUpperCase())}</h3>
+        <span class="font-label-mono text-[10px] uppercase px-2 py-1 tracking-widest font-bold" style="background:${badgeBg[a.kind]};color:${badgeFg[a.kind]}">${labelByKind[a.kind] || a.kind.toUpperCase()}</span>
+      </header>
+      <table class="w-full font-label-mono text-xs uppercase">
+        <tr class="border-b border-surface-container-highest"><td class="px-4 py-2 text-on-surface-variant w-1/3">VECTEUR</td><td class="px-4 py-2 text-primary-container text-right">${escapeHtml(a.vector || labelByKind[a.kind])}</td></tr>
+        <tr class="border-b border-surface-container-highest"><td class="px-4 py-2 text-on-surface-variant">CIBLE</td><td class="px-4 py-2 text-primary text-right">${escapeHtml(a.target || 'FR / PARTICULIERS')}</td></tr>
+        <tr><td class="px-4 py-2 text-on-surface-variant">RISQUE</td><td class="px-4 py-2 text-right font-bold" style="color:${riskColor(a.risk)}">${escapeHtml((a.risk || 'ÉLEVÉ').toUpperCase())}</td></tr>
+      </table>
+      ${a.example ? `<div class="mx-4 my-3 px-3 py-2 border-l-4 bg-surface-container-lowest" style="border-color:#fce442"><p class="font-body-md text-secondary italic">« ${escapeHtml(a.example)} »</p></div>` : ''}
+      ${a.description ? `<p class="font-body-md text-on-surface-variant px-4 pb-3">${escapeHtml(a.description)}</p>` : ''}
+      <footer class="flex justify-between items-center px-4 py-3 border-t-border-width-thin border-surface-container-highest">
+        <button class="font-label-mono text-label-mono text-primary uppercase active:opacity-50" onclick="copyToScan(${i})">ANALYSER SOURCE</button>
+        <span class="material-symbols-outlined text-primary">arrow_forward</span>
+      </footer>
+    </article>
   `).join('');
+}
+
+function riskColor(r) {
+  const v = (r || '').toUpperCase();
+  if (v.includes('CRITIQUE')) return '#ff3a3a';
+  if (v.includes('ÉLEV') || v.includes('HIGH')) return '#ff8b8b';
+  if (v.includes('MOYEN')) return '#fce442';
+  return '#00fbfb';
+}
+
+function copyToScan(idx) {
+  const cached = loadCachedScams();
+  const ex = cached?.alerts?.[idx]?.example;
+  if (!ex) return;
+  document.getElementById('threat-input').value = ex;
+  setTab('scan');
+  setTimeout(() => analyze(), 200);
 }
 
 function emptyCard(title, sub) {
