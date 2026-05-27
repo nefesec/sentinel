@@ -1,76 +1,106 @@
 {
   "version": 1,
-  "generated_at": "2026-05-26",
+  "generated_at": "2026-05-27",
   "alerts": [
     {
       "kind": "sms",
-      "title": "Faux SMS de colis Chronopost / La Poste",
+      "title": "Chronopost / La Poste",
+      "vector": "PHISHING LINK",
+      "target": "FR / PARTICULIERS",
+      "risk": "ÉLEVÉ",
       "date": "mai 2026",
-      "description": "Un SMS prétend qu'un colis ne peut pas être livré et demande de payer des 'frais de douane' ou de 'mettre à jour ton adresse' via un lien. Les vrais transporteurs ne demandent JAMAIS ça par SMS avec un lien direct.",
-      "example": "[CHRONOPOST] Votre colis n'a pas pu être livré. Réglez 1,99€ de frais : http://chronopost-livr.top/colis"
+      "description": "Un SMS prétend qu'un colis n'a pas pu être livré et demande de payer des 'frais de douane' ou 'mettre à jour ton adresse' via un lien. Les vrais transporteurs ne demandent jamais ça par SMS avec lien direct.",
+      "example": "[CHRONOPOST] Votre colis n'a pas pu être livré. Réglez 1,99€ de frais : http://bit.ly/chrono-frtrack"
+    },
+    {
+      "kind": "call",
+      "title": "Faux Conseiller Bancaire",
+      "vector": "SPOOFING / VISHING",
+      "target": "CLIENTS BANCAIRES",
+      "risk": "CRITIQUE",
+      "date": "mai 2026",
+      "description": "Quelqu'un appelle en se faisant passer pour le service fraude de ta banque, dit qu'il a détecté une transaction suspecte et demande de confirmer ton code 3D-Secure ou de faire un virement vers un 'compte sécurisé'. Aucune banque ne demande ça. Raccroche et rappelle via le numéro au dos de ta carte.",
+      "example": "Ici le service fraude de votre banque. Une opération suspecte de 1500€..."
+    },
+    {
+      "kind": "mail",
+      "title": "Amende ANTAI / Retard",
+      "vector": "MALICIOUS ATTACHMENT",
+      "target": "ENTREPRISES / PME",
+      "risk": "ÉLEVÉ",
+      "date": "mai 2026",
+      "description": "Email menaçant prétendant qu'une amende impayée va donner lieu à des poursuites par huissier. Les vraies amendes (ANTAI, Trésor public) passent par courrier postal, jamais par email avec lien ou pièce jointe.",
+      "example": "Dernier avis avant poursuite. Veuillez trouver ci-joint la contravention impayée n° 4829A. Le paiement doit intervenir sous 48h."
     },
     {
       "kind": "sms",
-      "title": "Faux SMS Ameli / sécurité sociale",
+      "title": "Ameli / Carte Vitale",
+      "vector": "PHISHING LINK",
+      "target": "ASSURÉS SOCIAUX",
+      "risk": "ÉLEVÉ",
       "date": "mai 2026",
       "description": "SMS prétendant que ta carte Vitale doit être mise à jour ou qu'un remboursement est en attente. Ameli ne demande jamais ça par SMS avec un lien. Connecte-toi à ameli.fr en tapant l'URL toi-même.",
       "example": "Cher assuré, votre carte Vitale doit être actualisée. Cliquez : https://bit.ly/ameli-maj"
     },
     {
-      "kind": "sms",
-      "title": "Faux SMS amende / police",
-      "date": "mai 2026",
-      "description": "SMS menaçant qui dit qu'une amende impayée va donner lieu à des poursuites. Les vraies amendes passent par courrier postal, jamais par SMS, et jamais avec un lien de paiement.",
-      "example": "ANTAI : Vous avez une amende impayée de 135€. Dernier rappel avant huissier. Réglez : http://amende-fr.xyz"
-    },
-    {
       "kind": "call",
-      "title": "Appel 'wangiri' (numéro étranger qui sonne 1 fois)",
+      "title": "Numéro Wangiri (1 sonnerie)",
+      "vector": "INTERNATIONAL CALLBACK",
+      "target": "TOUS",
+      "risk": "MOYEN",
       "date": "permanent",
-      "description": "Un numéro étranger (souvent commençant par +225, +233, +228, +44 ou autre) appelle 1 fois puis raccroche. Si tu rappelles, c'est un numéro surtaxé qui te coûte 5-50€ par minute. Ne rappelle JAMAIS un numéro inconnu international.",
+      "description": "Un numéro étranger (+225, +233, +228, +44...) appelle 1 seule fois puis raccroche. Si tu rappelles, c'est un numéro surtaxé qui te coûte 5 à 50€ par minute. Ne rappelle jamais un numéro inconnu international.",
       "example": "+225 27 22 11 22 33"
     },
     {
-      "kind": "call",
-      "title": "Faux conseiller bancaire / faux service client",
-      "date": "mai 2026",
-      "description": "Quelqu'un appelle en se faisant passer pour ta banque, dit qu'il y a une fraude et te demande de confirmer ton code 3D-Secure ou de faire un virement vers un 'compte sécurisé'. AUCUNE banque ne demande ça. Raccroche et rappelle ton conseiller via le numéro au dos de ta carte.",
-      "example": "Bonjour, c'est M. Martin du service fraude de votre banque. Nous avons détecté une transaction suspecte de 1500€..."
-    },
-    {
       "kind": "mail",
-      "title": "Faux email impôts / remboursement",
+      "title": "Impôts / Faux remboursement",
+      "vector": "CREDENTIAL THEFT",
+      "target": "CONTRIBUABLES",
+      "risk": "CRITIQUE",
       "date": "mai 2026",
-      "description": "Email prétendant que tu as droit à un remboursement d'impôts. Demande de cliquer sur un lien et entrer tes infos bancaires. Les impôts ne fonctionnent JAMAIS comme ça — connecte-toi sur impots.gouv.fr en tapant l'URL toi-même.",
+      "description": "Email prétendant que tu as droit à un remboursement d'impôts. Demande de cliquer sur un lien et entrer tes infos bancaires. Les impôts ne fonctionnent jamais comme ça — connecte-toi sur impots.gouv.fr en tapant l'URL toi-même.",
       "example": "Vous êtes éligible à un remboursement de 487€. Cliquez ici pour réclamer."
     },
     {
-      "kind": "mail",
-      "title": "Faux email Microsoft / Apple / Google",
-      "date": "permanent",
-      "description": "Email qui dit que ton compte va être suspendu ou qu'une 'connexion suspecte' a été détectée. Te demande de te connecter via un lien qui pointe vers un site qui ressemble à l'original mais avec un domaine bizarre (apple-id-verify.top, login-microsoft-fr.xyz...).",
-      "example": "Activité inhabituelle détectée sur votre compte. Confirmez votre identité : http://apple-id-secure.click"
-    },
-    {
       "kind": "url",
-      "title": "Faux site de crypto / investissement garanti",
+      "title": "Crypto Investissement Garanti",
+      "vector": "PONZI / SCAM SITE",
+      "target": "ÉPARGNANTS",
+      "risk": "CRITIQUE",
       "date": "permanent",
-      "description": "Pubs ou messages qui promettent 'X% de rendement garanti' en investissant dans une crypto-monnaie ou plateforme inconnue. Ces sites sont des arnaques (pyramide de Ponzi). Aucun investissement légitime ne garantit un rendement.",
+      "description": "Pubs ou messages qui promettent un rendement garanti en investissant dans une crypto-monnaie inconnue. Ces sites sont des arnaques (pyramide de Ponzi). Aucun investissement légitime ne garantit un rendement.",
       "example": "Investissez 250€ dans BitcoinPlus et gagnez 10 000€ en 3 mois — sans risque !"
     },
     {
-      "kind": "sms",
-      "title": "Faux SMS banque / 3D-Secure",
-      "date": "mai 2026",
-      "description": "SMS prétendant venir de ta banque, te demandant de valider ou refuser un paiement via un lien. Si tu cliques et entres tes codes, les escrocs ont accès à ton compte. Vérifie toujours via l'app officielle de ta banque.",
-      "example": "BNP Paribas : un paiement de 247€ a été initié. Si non, refusez ici : https://bnp-securite.click"
+      "kind": "mail",
+      "title": "Apple / Microsoft Activité Suspecte",
+      "vector": "PHISHING DOMAIN",
+      "target": "UTILISATEURS CLOUD",
+      "risk": "ÉLEVÉ",
+      "date": "permanent",
+      "description": "Email qui dit que ton compte va être suspendu ou qu'une connexion suspecte a été détectée. Le lien pointe vers un site qui ressemble à l'original mais avec un domaine bizarre (apple-id-verify.top, login-microsoft-fr.xyz...).",
+      "example": "Activité inhabituelle détectée sur votre compte. Confirmez : http://apple-id-secure.click"
     },
     {
       "kind": "sms",
-      "title": "Faux SMS livraison Vinted / LeBonCoin",
+      "title": "Vinted / Livraison Externe",
+      "vector": "PHISHING LINK",
+      "target": "VENDEURS PARTICULIERS",
+      "risk": "ÉLEVÉ",
       "date": "mai 2026",
       "description": "Quand tu vends un objet, un faux 'acheteur' te demande d'utiliser un faux service de livraison externe et te fait cliquer sur un lien pour 'confirmer la livraison'. Le lien est en fait un site de phishing qui vole tes infos bancaires.",
-      "example": "Bonjour, j'ai payé via le système de livraison sécurisée. Cliquez pour confirmer : https://vinted-livraison.shop"
+      "example": "Bonjour, j'ai payé via livraison sécurisée. Confirmez : https://vinted-livraison.shop"
+    },
+    {
+      "kind": "sms",
+      "title": "Banque / 3D-Secure Frauduleux",
+      "vector": "CREDENTIAL THEFT",
+      "target": "CLIENTS BANCAIRES",
+      "risk": "CRITIQUE",
+      "date": "mai 2026",
+      "description": "SMS prétendant venir de ta banque, te demandant de valider ou refuser un paiement via un lien. Si tu cliques et entres tes codes, les escrocs ont accès à ton compte. Vérifie toujours via l'app officielle de ta banque.",
+      "example": "BNP Paribas : paiement de 247€ initié. Si non, refusez : https://bnp-securite.click"
     }
   ],
   "patterns": []

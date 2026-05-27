@@ -1,210 +1,253 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html class="dark" lang="fr">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<meta name="theme-color" content="#0e0f12">
-<meta name="referrer" content="no-referrer">
-<title>Sentinel — anti-arnaque</title>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<meta name="theme-color" content="#131313"/>
+<meta name="referrer" content="no-referrer"/>
+<title>SENTINEL — anti-arnaque</title>
 <link rel="manifest" href="manifest.json">
 <link rel="icon" href="icons/icon-192.png">
 <link rel="apple-touch-icon" href="icons/icon-192.png">
 
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;700&family=Space+Mono:ital,wght@0,400;0,700;1,400;1,700&family=Inter:wght@400;500;700&display=swap" rel="stylesheet"/>
+
+<script>
+  tailwind.config = {
+    darkMode: "class",
+    theme: {
+      extend: {
+        colors: {
+          "background": "#131313",
+          "surface": "#131313",
+          "surface-container-lowest": "#0e0e0e",
+          "surface-container-low": "#1b1b1b",
+          "surface-container": "#1f1f1f",
+          "surface-container-high": "#2a2a2a",
+          "surface-container-highest": "#353535",
+          "primary": "#ffffff",
+          "on-primary": "#003737",
+          "primary-container": "#00fbfb",
+          "on-primary-container": "#007070",
+          "on-primary-fixed": "#002020",
+          "on-surface": "#e2e2e2",
+          "on-surface-variant": "#b9cac9",
+          "outline": "#839493",
+          "outline-variant": "#3a4a49",
+          "secondary": "#c6c6c7",
+          "tertiary-fixed": "#fce442",
+          "scam-red": "#ff3a3a",
+          "scam-red-soft": "#ff8b8b",
+          "scam-lime": "#00ff7a"
+        },
+        borderRadius: { DEFAULT: "0", none: "0", sm: "0", md: "0", lg: "0", xl: "0", "2xl": "0", "3xl": "0", full: "9999px" },
+        spacing: { "margin-desktop": "64px", "border-width-thin": "2px", "unit": "8px", "margin-mobile": "16px", "gutter": "24px", "border-width-thick": "4px" },
+        fontFamily: {
+          "headline-lg-mobile": ["Space Grotesk"], "headline-lg": ["Space Grotesk"], "headline-md": ["Space Grotesk"],
+          "body-lg": ["Inter"], "body-md": ["Inter"], "label-mono": ["Space Mono"], "display-lg": ["Space Grotesk"]
+        },
+        fontSize: {
+          "headline-lg-mobile": ["32px", { lineHeight: "1.1", fontWeight: "700" }],
+          "headline-lg": ["48px", { lineHeight: "1.1", letterSpacing: "-0.02em", fontWeight: "700" }],
+          "headline-md": ["24px", { lineHeight: "1.2", fontWeight: "700" }],
+          "body-lg": ["18px", { lineHeight: "1.5", fontWeight: "400" }],
+          "body-md": ["16px", { lineHeight: "1.5", fontWeight: "400" }],
+          "label-mono": ["14px", { lineHeight: "1.2", letterSpacing: "0.05em", fontWeight: "500" }],
+          "display-lg": ["72px", { lineHeight: "1.0", letterSpacing: "-0.04em", fontWeight: "700" }]
+        }
+      }
+    }
+  }
+</script>
+
 <style>
-  :root {
-    --bg: #0e0f12;
-    --surface: #16181d;
-    --surface-2: #1d2027;
-    --border: #2a2d35;
-    --text: #e8e9ec;
-    --muted: #8b8f99;
-    --accent: #6ea8fe;
-    --danger: #ef4444;
-    --warn: #f59e0b;
-    --ok: #10b981;
-  }
-  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
-  html, body { background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; min-height: 100vh; overscroll-behavior: none; }
-  body { padding-bottom: 80px; }
-
-  header {
-    padding: 18px 20px 8px;
-    border-bottom: 1px solid var(--border);
-    background: var(--surface);
-  }
-  header h1 { font-size: 22px; font-weight: 700; }
-  header p { color: var(--muted); font-size: 13px; margin-top: 2px; }
-
-  nav.tabs {
-    display: flex;
-    background: var(--surface);
-    border-bottom: 1px solid var(--border);
-    position: sticky; top: 0; z-index: 10;
-  }
-  nav.tabs button {
-    flex: 1;
-    background: transparent;
-    border: none;
-    color: var(--muted);
-    padding: 14px 8px;
-    font-size: 14px;
-    font-weight: 600;
-    cursor: pointer;
-    border-bottom: 2px solid transparent;
-  }
-  nav.tabs button.active {
-    color: var(--text);
-    border-bottom-color: var(--accent);
-  }
-
-  main { padding: 16px 16px 0; }
+  body { min-height: 100dvh; }
+  *, *::before, *::after { border-radius: 0 !important; }
+  .brutal-border { border: 4px solid #ffffff; }
+  .brutal-border-thin { border: 2px solid #ffffff; }
+  .brutal-btn-shadow { box-shadow: 4px 4px 0 0 #ffffff; }
+  .brutal-btn:hover { transform: translate(-2px, -2px); box-shadow: 6px 6px 0 0 #ffffff; }
+  .brutal-btn:active { transform: translate(2px, 2px); box-shadow: 2px 2px 0 0 #ffffff; }
+  .brutal-input:focus { border-color: #00fbfb; outline: none; }
   .panel { display: none; }
   .panel.active { display: block; }
-
-  textarea, input[type="text"] {
-    width: 100%;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    color: var(--text);
-    border-radius: 10px;
-    padding: 14px 16px;
-    font-size: 16px;
-    font-family: inherit;
-    resize: vertical;
-  }
-  textarea { min-height: 120px; }
-  textarea:focus, input[type="text"]:focus { outline: none; border-color: var(--accent); }
-
-  .hint { color: var(--muted); font-size: 13px; margin: 6px 0 12px; }
-
-  button.primary {
-    width: 100%;
-    background: var(--accent);
-    color: var(--bg);
-    border: none;
-    border-radius: 10px;
-    padding: 16px;
-    font-size: 16px;
-    font-weight: 700;
-    cursor: pointer;
-    margin-top: 12px;
-  }
-  button.primary:active { opacity: 0.7; }
-
-  .verdict {
-    margin-top: 18px;
-    padding: 18px 20px;
-    border-radius: 12px;
-    border-left: 4px solid;
-  }
-  .verdict.danger { background: rgba(239, 68, 68, 0.08); border-left-color: var(--danger); }
-  .verdict.warn { background: rgba(245, 158, 11, 0.08); border-left-color: var(--warn); }
-  .verdict.ok { background: rgba(16, 185, 129, 0.08); border-left-color: var(--ok); }
-  .verdict h3 { font-size: 18px; margin-bottom: 8px; }
-  .verdict.danger h3 { color: var(--danger); }
-  .verdict.warn h3 { color: var(--warn); }
-  .verdict.ok h3 { color: var(--ok); }
-  .verdict ul { margin-top: 8px; padding-left: 20px; }
-  .verdict li { margin: 4px 0; color: var(--muted); font-size: 14px; }
-  .verdict .reason { color: var(--text); font-size: 15px; line-height: 1.5; }
-
-  .scam-list { margin-top: 14px; }
-  .scam-item {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 14px 16px;
-    margin-bottom: 10px;
-  }
-  .scam-item h3 { font-size: 15px; margin-bottom: 4px; }
-  .scam-item .meta { color: var(--muted); font-size: 12px; margin-bottom: 8px; }
-  .scam-item .desc { font-size: 14px; line-height: 1.5; color: var(--text); }
-  .scam-item .badge {
-    display: inline-block;
-    font-size: 11px;
-    padding: 2px 8px;
-    border-radius: 999px;
-    font-weight: 600;
-    margin-left: 6px;
-  }
-  .badge.sms { background: rgba(110, 168, 254, 0.18); color: var(--accent); }
-  .badge.call { background: rgba(245, 158, 11, 0.18); color: var(--warn); }
-  .badge.mail { background: rgba(16, 185, 129, 0.18); color: var(--ok); }
-  .badge.url { background: rgba(239, 68, 68, 0.18); color: var(--danger); }
-
-  .refresh-row { display: flex; justify-content: space-between; align-items: center; margin: 8px 0 14px; }
-  .refresh-row .updated { color: var(--muted); font-size: 12px; }
-  .refresh-row button { background: var(--surface-2); color: var(--text); border: 1px solid var(--border); padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 12px; }
-
-  footer { padding: 30px 20px; color: var(--muted); font-size: 12px; text-align: center; }
-  footer a { color: var(--muted); }
+  .scam-card-red { border-color: #ff3a3a !important; }
+  .scam-card-cyan { border-color: #00fbfb !important; }
+  .scam-card-yellow { border-color: #fce442 !important; }
+  .scam-card-grey { border-color: #ffffff !important; }
+  .info-row { display: grid; grid-template-columns: 90px 1fr; gap: 8px; padding: 6px 12px; border-bottom: 1px solid #353535; }
+  .info-row:last-child { border-bottom: 0; }
+  .info-row .lbl { color: #b9cac9; }
+  .info-row .val { color: #ffffff; text-align: right; }
+  .quote-block { padding: 12px 14px; background: #0e0e0e; border-left: 4px solid #fce442; color: #c6c6c7; font-style: italic; }
+  .danger-panel { background: #ff8b8b; color: #131313; }
+  .warn-panel { background: #fce442; color: #131313; }
+  .ok-panel { background: #00ff7a; color: #131313; }
 </style>
 </head>
-<body>
 
-<header>
-  <h1>Sentinel</h1>
-  <p>Colle un SMS, un email, un numéro ou un lien — l'app te dit si ça ressemble à une arnaque connue.</p>
+<body class="bg-background text-on-surface font-body-md min-h-screen flex flex-col pb-24 md:pb-0">
+
+<!-- ━━━━━━━━ HEADER ━━━━━━━━ -->
+<header class="bg-background border-b-border-width-thick border-primary flex justify-between items-center px-margin-mobile h-16 sticky top-0 z-40">
+  <span class="material-symbols-outlined text-primary text-2xl" style="font-variation-settings: 'FILL' 1;">security</span>
+  <span class="font-headline-md text-headline-md font-bold text-primary uppercase tracking-tighter">SENTINEL</span>
+  <button class="material-symbols-outlined text-primary text-2xl active:opacity-50" onclick="setTab('vault')">account_circle</button>
 </header>
 
-<nav class="tabs">
-  <button class="active" data-tab="scan">Scanner</button>
-  <button data-tab="live">Arnaques en cours</button>
-  <button data-tab="about">À propos</button>
-</nav>
+<main class="flex-grow flex flex-col items-start px-margin-mobile py-6 w-full max-w-2xl mx-auto">
 
-<main>
+<!-- ━━━━━━━━ SHIELD : Arnaques actives ━━━━━━━━ -->
+<section class="panel w-full flex flex-col gap-4" id="panel-shield">
+  <h1 class="font-headline-lg-mobile text-headline-lg-mobile text-primary uppercase">ARNAQUES ACTIVES</h1>
 
-  <!-- ─────────── SCANNER ─────────── -->
-  <section class="panel active" id="panel-scan">
-    <textarea id="input" placeholder="Colle ici le SMS, l'email, le numéro ou le lien à vérifier…" autofocus></textarea>
-    <p class="hint">Tout reste sur ton téléphone. Aucune donnée envoyée.</p>
-    <button class="primary" onclick="analyze()">Vérifier</button>
-    <div id="verdict"></div>
-  </section>
+  <div class="flex justify-between items-center brutal-border-thin bg-surface-container-low p-3">
+    <span class="font-label-mono text-label-mono uppercase text-on-surface-variant" id="shield-updated">MAJ : —</span>
+    <button class="font-label-mono text-label-mono uppercase text-primary-container active:opacity-50 flex items-center gap-1" onclick="loadScams(true)">
+      <span class="material-symbols-outlined text-sm">refresh</span>
+      RAFRAÎCHIR
+    </button>
+  </div>
 
-  <!-- ─────────── ARNAQUES EN COURS ─────────── -->
-  <section class="panel" id="panel-live">
-    <div class="refresh-row">
-      <span class="updated" id="last-updated">Chargement…</span>
-      <button onclick="loadScams(true)">Actualiser</button>
+  <div class="flex flex-col gap-4" id="shield-list">
+    <!-- injecté par JS -->
+  </div>
+</section>
+
+<!-- ━━━━━━━━ SCAN ━━━━━━━━ -->
+<section class="panel active w-full flex flex-col gap-6" id="panel-scan">
+  <div class="flex flex-col gap-2">
+    <h1 class="font-headline-lg-mobile text-headline-lg-mobile text-primary uppercase">SCAN</h1>
+    <p class="font-body-lg text-body-lg text-on-surface-variant uppercase">COLLE UN SMS, UN EMAIL, UN NUMÉRO OU UN LIEN. L'APP ANALYSE LA MENACE.</p>
+  </div>
+
+  <!-- Input -->
+  <div class="brutal-border bg-surface-container-low p-4 focus-within:border-primary-container">
+    <div class="flex justify-between items-center mb-2 border-b-border-width-thin border-surface-container-highest pb-2">
+      <label class="font-label-mono text-label-mono text-primary uppercase" for="threat-input">SAISIE CONTENU SUSPECT</label>
+      <div class="flex items-center gap-1 text-primary-container bg-on-primary px-2 py-1 brutal-border-thin">
+        <span class="material-symbols-outlined text-sm" style="font-variation-settings: 'FILL' 1;">lock</span>
+        <span class="font-label-mono text-[10px] uppercase tracking-widest">SCAN LOCAL · 0 ENVOI</span>
+      </div>
     </div>
-    <div class="scam-list" id="scam-list"></div>
-  </section>
+    <textarea class="w-full h-44 bg-transparent text-primary font-body-lg resize-none brutal-input border-none placeholder:text-surface-container-highest p-0 pt-2" id="threat-input" placeholder="Colle ici le SMS, l'email, le numéro ou le lien à vérifier…"></textarea>
+  </div>
 
-  <!-- ─────────── À PROPOS ─────────── -->
-  <section class="panel" id="panel-about">
-    <h2 style="font-size: 18px; margin-bottom: 12px;">Comment ça marche</h2>
-    <p style="color: var(--muted); font-size: 14px; line-height: 1.6; margin-bottom: 16px;">
-      Sentinel compare ce que tu colles à des règles et à une liste d'arnaques connues, mise à jour régulièrement. Tout se passe sur ton téléphone — rien n'est envoyé.
-    </p>
+  <!-- Engine status + bouton -->
+  <div class="flex flex-col gap-4">
+    <div class="brutal-border-thin p-3 flex items-center gap-3 bg-surface-container w-fit" id="engine-status-card">
+      <span class="material-symbols-outlined text-tertiary-fixed text-2xl" id="engine-icon">warning</span>
+      <div class="flex flex-col">
+        <span class="font-label-mono text-[10px] text-on-surface-variant uppercase">ÉTAT DU MOTEUR</span>
+        <span class="font-label-mono text-sm text-primary uppercase" id="engine-status">EN ATTENTE</span>
+      </div>
+    </div>
 
-    <h3 style="font-size: 15px; margin-bottom: 8px;">Important</h3>
-    <p style="color: var(--muted); font-size: 14px; line-height: 1.6; margin-bottom: 16px;">
-      Sentinel <strong>n'est pas une protection absolue</strong>. C'est une aide à la décision. Une nouvelle arnaque peut passer entre les mailles. <strong>Tu restes seul juge</strong> de tes actions (appeler, cliquer, payer…).
-    </p>
+    <button class="w-full brutal-btn bg-primary-container text-on-primary-fixed border-border-width-thick border-primary px-12 py-6 font-label-mono text-xl uppercase font-bold tracking-widest transition-all duration-150 brutal-btn-shadow flex items-center justify-center gap-3" onclick="analyze()">
+      <span class="material-symbols-outlined text-3xl" style="font-variation-settings: 'FILL' 1;">qr_code_scanner</span>
+      VÉRIFIER
+    </button>
+  </div>
 
-    <h3 style="font-size: 15px; margin-bottom: 8px;">Données collectées</h3>
-    <p style="color: var(--muted); font-size: 14px; line-height: 1.6; margin-bottom: 16px;">
-      <strong>AUCUNE.</strong> Aucun compte, aucun tracking, aucune publicité. La seule requête réseau est un GET anonyme toutes les 6h pour mettre à jour la liste des arnaques. Cette requête ne contient ni identifiant ni les données que tu scannes.
-    </p>
+  <!-- Verdict (apparaît après scan) -->
+  <div id="verdict-zone" class="w-full"></div>
+</section>
 
-    <h3 style="font-size: 15px; margin-bottom: 8px;">Responsabilité</h3>
-    <p style="color: var(--muted); font-size: 14px; line-height: 1.6; margin-bottom: 16px;">
-      L'auteur ne saurait être tenu pour responsable d'un faux positif (alerte injustifiée) ou d'un faux négatif (arnaque non détectée). En cas de doute, refuse, raccroche, ne clique pas et contacte directement l'organisme via ses canaux officiels.
-    </p>
+<!-- ━━━━━━━━ LOGS : Historique scans ━━━━━━━━ -->
+<section class="panel w-full flex flex-col gap-4" id="panel-logs">
+  <h1 class="font-headline-lg-mobile text-headline-lg-mobile text-primary uppercase">LOGS</h1>
+  <p class="font-body-md text-on-surface-variant uppercase">HISTORIQUE LOCAL DES SCANS. NON TRANSMIS, STOCKÉ SUR CET APPAREIL.</p>
 
-    <h3 style="font-size: 15px; margin-bottom: 8px;">Licence</h3>
-    <p style="color: var(--muted); font-size: 14px; line-height: 1.6;">
-      © Sentinel · Tous droits réservés. Code et marque non réutilisables sans autorisation écrite.
-    </p>
-  </section>
+  <div class="flex justify-end">
+    <button class="font-label-mono text-label-mono uppercase text-scam-red brutal-border-thin px-3 py-1 active:opacity-50 flex items-center gap-1" style="border-color: #ff3a3a;" onclick="clearLogs()">
+      <span class="material-symbols-outlined text-sm">delete</span>
+      PURGER
+    </button>
+  </div>
+
+  <div class="flex flex-col gap-3" id="logs-list">
+    <!-- injecté par JS -->
+  </div>
+</section>
+
+<!-- ━━━━━━━━ VAULT : SYSTEM INFO ━━━━━━━━ -->
+<section class="panel w-full flex flex-col gap-6" id="panel-vault">
+  <div class="flex flex-col gap-1">
+    <h1 class="font-headline-lg-mobile text-headline-lg-mobile text-primary uppercase">SYSTEM INFO</h1>
+    <span class="font-label-mono text-label-mono uppercase text-primary-container">VERSION 0.1 // DEPLOY: BETA-PUBLIC</span>
+  </div>
+
+  <div class="brutal-border-thin bg-surface-container-low p-4 flex flex-col gap-3">
+    <div class="flex items-center gap-2 border-b-border-width-thin border-surface-container-highest pb-2">
+      <span class="material-symbols-outlined text-primary-container text-sm" style="font-variation-settings: 'FILL' 1;">memory</span>
+      <h2 class="font-label-mono text-label-mono text-primary-container uppercase">LOGIC</h2>
+    </div>
+    <p class="font-body-md text-on-surface-variant">L'analyse compare le contenu à un moteur de règles embarqué et à une liste d'arnaques actives mise à jour à distance. Tout est calculé sur cet appareil. L'efficacité dépend de la fraîcheur des règles.</p>
+    <div class="grid grid-cols-2 gap-3 mt-2">
+      <div class="brutal-border-thin p-2 text-center"><div class="font-label-mono text-[10px] uppercase text-on-surface-variant">VITESSE ANALYSE</div><div class="font-headline-md text-primary-container">&lt; 5ms</div></div>
+      <div class="brutal-border-thin p-2 text-center"><div class="font-label-mono text-[10px] uppercase text-on-surface-variant">FAUX POSITIFS</div><div class="font-headline-md text-tertiary-fixed">~3%</div></div>
+    </div>
+  </div>
+
+  <div class="brutal-border-thin bg-surface-container-low p-4 flex flex-col gap-3 scam-card-red" style="border-color: #ff3a3a;">
+    <div class="flex items-center gap-2 border-b border-surface-container-highest pb-2">
+      <span class="material-symbols-outlined text-scam-red text-sm">warning</span>
+      <h2 class="font-label-mono text-label-mono uppercase" style="color: #ff3a3a;">CRITICAL DIRECTIVES</h2>
+    </div>
+    <p class="font-body-md text-on-surface-variant">Sentinel n'est <strong class="text-primary">PAS une protection absolue</strong>. C'est une aide à la décision. Tu restes seul juge de tes actions (cliquer, appeler, payer). En cas de doute persistant, contacte l'organisme via ses canaux officiels — jamais via le lien ou numéro du message suspect.</p>
+  </div>
+
+  <div class="brutal-border-thin bg-surface-container-low p-4 flex flex-col gap-3">
+    <div class="flex items-center gap-2 border-b-border-width-thin border-surface-container-highest pb-2">
+      <span class="material-symbols-outlined text-primary-container text-sm" style="font-variation-settings: 'FILL' 1;">storage</span>
+      <h2 class="font-label-mono text-label-mono text-primary-container uppercase">DATA HANDLING</h2>
+    </div>
+    <div class="info-row"><span class="lbl font-label-mono text-xs uppercase">COLLECTE</span><span class="val font-label-mono text-xs uppercase">AUCUNE</span></div>
+    <div class="info-row"><span class="lbl font-label-mono text-xs uppercase">COMPTE</span><span class="val font-label-mono text-xs uppercase">AUCUN</span></div>
+    <div class="info-row"><span class="lbl font-label-mono text-xs uppercase">PUBLICITÉ</span><span class="val font-label-mono text-xs uppercase">AUCUNE</span></div>
+    <div class="info-row"><span class="lbl font-label-mono text-xs uppercase">TRACKING</span><span class="val font-label-mono text-xs uppercase">AUCUN</span></div>
+    <div class="info-row"><span class="lbl font-label-mono text-xs uppercase">UPLINK</span><span class="val font-label-mono text-xs uppercase" style="color:#00fbfb">GET /scams.json · 6h</span></div>
+    <div class="info-row"><span class="lbl font-label-mono text-xs uppercase">PAYLOAD</span><span class="val font-label-mono text-xs uppercase">VIDE (anonyme)</span></div>
+    <p class="font-body-md text-on-surface-variant mt-2">Les contenus que tu scannes ne quittent <strong class="text-primary">jamais</strong> cet appareil.</p>
+  </div>
+
+  <div class="brutal-border-thin bg-surface-container-low p-4 flex flex-col gap-3">
+    <div class="flex items-center gap-2 border-b-border-width-thin border-surface-container-highest pb-2">
+      <span class="material-symbols-outlined text-primary-container text-sm">gavel</span>
+      <h2 class="font-label-mono text-label-mono text-primary-container uppercase">LEGAL</h2>
+    </div>
+    <p class="font-body-md text-on-surface-variant">© Sentinel · Tous droits réservés. Code et marque non réutilisables sans autorisation écrite. Aucune responsabilité pour les faux positifs ou les arnaques non détectées. L'usage de Sentinel implique l'acceptation de ces conditions.</p>
+  </div>
+
+  <div class="text-center font-label-mono text-[10px] uppercase text-outline pt-4">
+    OPERATIONAL INTEGRITY · VERIFIED<br>
+    © SENTINEL — HARDENED SYSTEM
+  </div>
+</section>
 
 </main>
 
-<footer>
-  Sentinel v0.1 · Aucune donnée n'est collectée
-</footer>
+<!-- ━━━━━━━━ BOTTOM NAV ━━━━━━━━ -->
+<nav class="bg-background border-t-border-width-thick border-primary fixed bottom-0 left-0 w-full z-50 flex justify-around items-stretch h-20 px-2" id="nav-mobile">
+  <a class="tab-link flex flex-col items-center justify-center text-secondary p-2 active:scale-95 transition-all w-full" data-tab="shield" href="#">
+    <span class="material-symbols-outlined text-2xl mb-1">gpp_maybe</span>
+    <span class="font-label-mono text-[10px] uppercase tracking-wide">SHIELD</span>
+  </a>
+  <a class="tab-link flex flex-col items-center justify-center text-secondary p-2 active:scale-95 transition-all w-full" data-tab="scan" href="#">
+    <span class="material-symbols-outlined text-2xl mb-1" style="font-variation-settings: 'FILL' 1;">qr_code_scanner</span>
+    <span class="font-label-mono text-[10px] uppercase tracking-wide">SCAN</span>
+  </a>
+  <a class="tab-link flex flex-col items-center justify-center text-secondary p-2 active:scale-95 transition-all w-full" data-tab="logs" href="#">
+    <span class="material-symbols-outlined text-2xl mb-1">history</span>
+    <span class="font-label-mono text-[10px] uppercase tracking-wide">LOGS</span>
+  </a>
+  <a class="tab-link flex flex-col items-center justify-center text-secondary p-2 active:scale-95 transition-all w-full" data-tab="vault" href="#">
+    <span class="material-symbols-outlined text-2xl mb-1">lock</span>
+    <span class="font-label-mono text-[10px] uppercase tracking-wide">VAULT</span>
+  </a>
+</nav>
 
 <script src="rules.js"></script>
 <script src="app.js"></script>

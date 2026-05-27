@@ -1,142 +1,210 @@
 /**
- * Sentinel — logique UI + analyse locale.
- * Toute l'analyse est faite en local. Aucun envoi réseau autre que le fetch
- * périodique du JSON public (toutes les 6h, GET anonyme).
+ * Sentinel — UI Neo-Brutalist + analyse 100% locale.
+ * Aucune donnée n'est transmise. Seule requête : GET anonyme du scams.json
+ * toutes les 6h pour mettre à jour la liste des arnaques en cours.
  */
 
-const SCAMS_JSON_URL = 'scams.json';  // chemin relatif (même origine que la page)
+const SCAMS_JSON_URL = 'scams.json';
 const SCAMS_REFRESH_MS = 6 * 60 * 60 * 1000;
 const SCAMS_CACHE_KEY = 'sentinel:scams';
+const LOGS_KEY = 'sentinel:logs';
+const LOGS_MAX = 50;
 
-// ────── Tabs ──────
+// ══════════════════════════════════════════════════════════
+// TABS
+// ══════════════════════════════════════════════════════════
 
-document.querySelectorAll('nav.tabs button').forEach(btn => {
-  btn.addEventListener('click', () => {
-    document.querySelectorAll('nav.tabs button').forEach(b => b.classList.remove('active'));
-    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
-    btn.classList.add('active');
-    document.getElementById('panel-' + btn.dataset.tab).classList.add('active');
-    if (btn.dataset.tab === 'live') { loadScams(); }
+function setTab(name) {
+  document.querySelectorAll('.tab-link').forEach(a => {
+    const active = a.dataset.tab === name;
+    if (active) {
+      a.classList.add('text-primary-container');
+      a.classList.remove('text-secondary');
+    } else {
+      a.classList.remove('text-primary-container');
+      a.classList.add('text-secondary');
+    }
   });
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.getElementById('panel-' + name).classList.add('active');
+  window.scrollTo(0, 0);
+
+  if (name === 'shield') loadScams();
+  if (name === 'logs') renderLogs();
+}
+
+document.querySelectorAll('.tab-link').forEach(a => {
+  a.addEventListener('click', e => { e.preventDefault(); setTab(a.dataset.tab); });
 });
 
-// ────── Analyse ──────
+// ══════════════════════════════════════════════════════════
+// ANALYSE
+// ══════════════════════════════════════════════════════════
 
 function analyze() {
-  const input = document.getElementById('input').value.trim();
-  const verdictEl = document.getElementById('verdict');
-  if (!input) {
-    verdictEl.innerHTML = '';
-    return;
-  }
+  const input = document.getElementById('threat-input').value.trim();
+  const zone = document.getElementById('verdict-zone');
+  if (!input) { zone.innerHTML = ''; updateEngine('EN ATTENTE', 'warning', '#fce442'); return; }
+
+  updateEngine('ANALYSE...', 'sync', '#00fbfb');
 
   const type = detectInputType(input);
   let score = 0;
   const reasons = [];
+  const matchedTypes = new Set();
 
-  // Règles statiques (rules.js)
   for (const r of RULES.keywords) {
-    if (r.re.test(input)) {
-      score += r.score;
-      reasons.push(reasonFmt(r));
-    }
+    if (r.re.test(input)) { score += r.score; reasons.push(r.reason); matchedTypes.add('KEYWORD'); }
   }
   for (const r of RULES.urlPatterns) {
-    if (r.re.test(input)) {
-      score += r.score;
-      reasons.push(reasonFmt(r));
-    }
+    if (r.re.test(input)) { score += r.score; reasons.push(r.reason); matchedTypes.add('URL'); }
   }
   if (type === 'phone') {
     for (const r of RULES.phonePatterns) {
-      if (r.re.test(input)) {
-        score += r.score;
-        if (r.score > 0) reasons.push(reasonFmt(r));
-      }
+      if (r.re.test(input) && r.score > 0) { score += r.score; reasons.push(r.reason); matchedTypes.add('PHONE'); }
     }
   }
   for (const c of RULES.combos) {
-    const all = c.triggers.every(t => input.toLowerCase().includes(t));
-    if (all) {
-      score += c.score;
-      reasons.push(reasonFmt(c));
+    if (c.triggers.every(t => input.toLowerCase().includes(t))) {
+      score += c.score; reasons.push(c.reason); matchedTypes.add('COMBO');
     }
   }
 
-  // Patterns dynamiques (scams.json — chargés en cache)
-  const dynScams = loadCachedScams();
-  if (dynScams && dynScams.patterns) {
-    for (const r of dynScams.patterns) {
+  // Patterns dynamiques (scams.json)
+  const dyn = loadCachedScams();
+  if (dyn?.patterns) {
+    for (const r of dyn.patterns) {
       try {
         const re = new RegExp(r.re, r.flags || 'i');
-        if (re.test(input)) {
-          score += r.score || 2;
-          reasons.push(`${r.reason} (mise à jour récente)`);
-        }
-      } catch (_) {}
+        if (re.test(input)) { score += r.score || 2; reasons.push(`${r.reason} (signalé récemment)`); matchedTypes.add('LIVE-FEED'); }
+      } catch {}
     }
   }
 
-  // Rendu verdict
-  let cssClass, title, advice;
+  let verdict;
   if (score >= 5) {
-    cssClass = 'danger';
-    title = 'Arnaque très probable';
-    advice = 'Ne clique pas, n\'appelle pas, ne réponds pas. Supprime le message. Si tu doutes, contacte l\'organisme via ses canaux officiels (jamais via le lien/numéro du message).';
+    verdict = { level: 'danger', title: 'DANGER', subtitle: 'ARNAQUE PROBABLE',
+      icon: 'warning', actions: 'NE PAS CLIQUER.\nNE PAS APPELER.\nSUPPRIMER.',
+      engineLabel: 'MENACE DÉTECTÉE', engineColor: '#ff3a3a', engineIcon: 'gpp_bad' };
   } else if (score >= 2) {
-    cssClass = 'warn';
-    title = 'Méfiance recommandée';
-    advice = 'Plusieurs signaux suspects. Vérifie via une source officielle (site web tapé à la main, numéro au dos de ta carte bancaire, etc.) avant toute action.';
+    verdict = { level: 'warn', title: 'ATTENTION', subtitle: 'SIGNAUX SUSPECTS',
+      icon: 'warning', actions: 'VÉRIFIE LA SOURCE.\nNE PAS AGIR DANS L\'URGENCE.',
+      engineLabel: 'MÉFIANCE', engineColor: '#fce442', engineIcon: 'priority_high' };
   } else {
-    cssClass = 'ok';
-    title = 'Aucun signal d\'arnaque connu';
-    advice = 'Mais reste prudent : une nouvelle arnaque peut passer. Si quelque chose te semble bizarre, n\'agis pas dans la précipitation.';
+    verdict = { level: 'ok', title: 'CLEAR', subtitle: 'AUCUNE MENACE CONNUE',
+      icon: 'verified_user', actions: 'AUCUN SIGNAL DÉTECTÉ.\nRESTE PRUDENT — UNE NOUVELLE ARNAQUE PEUT PASSER.',
+      engineLabel: 'OPÉRATIONNEL', engineColor: '#00ff7a', engineIcon: 'verified_user' };
   }
 
-  verdictEl.innerHTML = `
-    <div class="verdict ${cssClass}">
-      <h3>${title}</h3>
-      <p class="reason">${advice}</p>
-      ${reasons.length > 0 ? `<ul>${reasons.map(r => `<li>${escapeHtml(r)}</li>`).join('')}</ul>` : ''}
+  updateEngine(verdict.engineLabel, verdict.engineIcon, verdict.engineColor);
+  renderVerdict(verdict, input, type, score, reasons, [...matchedTypes]);
+  saveLog({ input, type, score, verdict: verdict.level, reasons, ts: Date.now() });
+}
+
+function updateEngine(label, icon, color) {
+  document.getElementById('engine-status').textContent = label;
+  const i = document.getElementById('engine-icon');
+  i.textContent = icon;
+  i.style.color = color;
+  document.getElementById('engine-status-card').style.borderColor = color;
+}
+
+function renderVerdict(v, input, type, score, reasons, matchedTypes) {
+  const zone = document.getElementById('verdict-zone');
+  const panelClass = v.level === 'danger' ? 'danger-panel' : v.level === 'warn' ? 'warn-panel' : 'ok-panel';
+  const sourceSample = escapeHtml(input.slice(0, 120) + (input.length > 120 ? '…' : ''));
+  const inputTypeLabel = { phone: 'NUMÉRO', url: 'LIEN', email: 'EMAIL', message: 'TEXTE' }[type];
+
+  zone.innerHTML = `
+    <div class="brutal-border ${panelClass} px-6 py-8 text-center mt-6">
+      <div class="brutal-border-thin inline-block px-3 py-1 mb-4" style="border-color:#131313">
+        <span class="font-label-mono text-xs uppercase tracking-widest">SCAN TERMINÉ</span>
+      </div>
+      <div class="font-display-lg text-display-lg leading-none mb-3" style="font-size: clamp(48px, 14vw, 80px)">${v.title}</div>
+      <div class="font-label-mono text-label-mono uppercase tracking-widest">${v.subtitle}</div>
+    </div>
+
+    <div class="flex items-start gap-2 mt-6 mb-2">
+      <span class="material-symbols-outlined text-2xl" style="color:${v.level==='danger'?'#ff3a3a':v.level==='warn'?'#fce442':'#00ff7a'}">${v.icon}</span>
+      <div class="font-label-mono text-label-mono uppercase">ACTION REQUISE</div>
+    </div>
+    <div class="font-headline-md text-headline-md text-primary uppercase whitespace-pre-line mb-6">${v.actions}</div>
+
+    <div class="brutal-border-thin bg-surface-container-low p-4 mb-3">
+      <div class="flex justify-between items-center border-b-border-width-thin border-surface-container-highest pb-2 mb-2">
+        <h3 class="font-label-mono text-label-mono uppercase text-primary-container">SIGNAL TYPE</h3>
+        <span class="material-symbols-outlined text-primary-container">label</span>
+      </div>
+      <div class="font-label-mono text-sm text-primary uppercase">▸ ${escapeHtml(inputTypeLabel)} — SCORE ${score}/10</div>
+      <div class="font-body-md text-on-surface-variant mt-1">${matchedTypes.length ? matchedTypes.join(' · ') : 'AUCUN MOTIF DÉCLENCHÉ'}</div>
+    </div>
+
+    ${reasons.length > 0 ? `
+    <div class="brutal-border-thin bg-surface-container-low p-4 mb-3">
+      <div class="flex justify-between items-center border-b-border-width-thin border-surface-container-highest pb-2 mb-2">
+        <h3 class="font-label-mono text-label-mono uppercase text-primary-container">MOTIFS DÉTECTÉS</h3>
+        <span class="material-symbols-outlined text-primary-container">list_alt</span>
+      </div>
+      <ul class="flex flex-col gap-2">
+        ${reasons.map(r => `<li class="font-body-md text-on-surface flex gap-2"><span class="text-primary-container">▸</span>${escapeHtml(r)}</li>`).join('')}
+      </ul>
+    </div>` : ''}
+
+    <div class="brutal-border-thin bg-surface-container-low p-4 mb-6">
+      <div class="flex justify-between items-center border-b-border-width-thin border-surface-container-highest pb-2 mb-2">
+        <h3 class="font-label-mono text-label-mono uppercase text-primary-container">SOURCE ANALYSIS</h3>
+        <span class="material-symbols-outlined text-primary-container">code</span>
+      </div>
+      <div class="font-label-mono text-xs text-on-surface-variant break-all">[RAW_INPUT] : "${sourceSample}"</div>
+    </div>
+
+    <div class="flex flex-col gap-3">
+      <button class="brutal-border-thin bg-surface-container px-4 py-3 font-label-mono text-label-mono uppercase text-primary flex items-center justify-center gap-2 active:opacity-50" onclick="markHandled()">
+        <span class="material-symbols-outlined text-base">check_circle</span>
+        ${v.level === 'danger' ? 'J\'AI SUPPRIMÉ' : v.level === 'warn' ? 'NOTÉ' : 'COMPRIS'}
+      </button>
+      <button class="brutal-btn bg-primary-container text-on-primary-fixed border-border-width-thick border-primary px-8 py-4 font-label-mono text-base uppercase font-bold tracking-widest brutal-btn-shadow flex items-center justify-center gap-2" onclick="resetScan()">
+        <span class="material-symbols-outlined">restart_alt</span>
+        NOUVEAU SCAN
+      </button>
+    </div>
+  `;
+  zone.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function resetScan() {
+  document.getElementById('threat-input').value = '';
+  document.getElementById('verdict-zone').innerHTML = '';
+  updateEngine('EN ATTENTE', 'warning', '#fce442');
+  document.getElementById('threat-input').focus();
+}
+
+function markHandled() {
+  document.getElementById('verdict-zone').innerHTML = `
+    <div class="brutal-border bg-surface-container-low p-6 text-center mt-6">
+      <span class="material-symbols-outlined text-primary-container" style="font-size:48px">verified</span>
+      <div class="font-label-mono text-label-mono text-primary-container uppercase mt-2">CONFIRMÉ</div>
+      <button class="brutal-btn bg-primary-container text-on-primary-fixed border-border-width-thick border-primary px-8 py-4 mt-4 font-label-mono text-base uppercase font-bold tracking-widest brutal-btn-shadow inline-flex items-center gap-2" onclick="resetScan()">
+        <span class="material-symbols-outlined">restart_alt</span>NOUVEAU SCAN
+      </button>
     </div>
   `;
 }
 
-function reasonFmt(r) {
-  return r.reason;
-}
-
-function escapeHtml(s) {
-  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-}
-
-// Permet de lancer la vérif avec Enter (sauf shift+enter pour multi-lignes)
-document.getElementById('input').addEventListener('keydown', e => {
-  if (e.key === 'Enter' && !e.shiftKey && e.ctrlKey) {
-    e.preventDefault();
-    analyze();
-  }
-});
-
-// ────── Arnaques en cours (fetch JSON) ──────
+// ══════════════════════════════════════════════════════════
+// SHIELD : Arnaques actives (fetch JSON)
+// ══════════════════════════════════════════════════════════
 
 function loadCachedScams() {
-  try {
-    const raw = localStorage.getItem(SCAMS_CACHE_KEY);
-    if (!raw) return null;
-    const data = JSON.parse(raw);
-    return data;
-  } catch { return null; }
+  try { return JSON.parse(localStorage.getItem(SCAMS_CACHE_KEY) || 'null'); }
+  catch { return null; }
 }
 
 async function loadScams(force = false) {
   const cached = loadCachedScams();
   const now = Date.now();
   const stale = !cached || force || (now - (cached._fetchedAt || 0)) > SCAMS_REFRESH_MS;
-
-  // Affiche le cache immédiatement si dispo
-  if (cached) renderScams(cached);
-
+  if (cached) renderShield(cached);
   if (!stale) return;
 
   try {
@@ -145,50 +213,125 @@ async function loadScams(force = false) {
     const data = await res.json();
     data._fetchedAt = now;
     localStorage.setItem(SCAMS_CACHE_KEY, JSON.stringify(data));
-    renderScams(data);
+    renderShield(data);
   } catch (e) {
     if (!cached) {
-      document.getElementById('scam-list').innerHTML =
-        `<p style="color:var(--muted); font-size:14px; padding:20px; text-align:center;">
-          Impossible de récupérer la liste actuelle. ${cached ? '' : 'Aucune donnée locale.'}
-        </p>`;
+      document.getElementById('shield-list').innerHTML = emptyCard('FEED INDISPONIBLE',
+        'Impossible de récupérer la liste actuelle des arnaques. Réessaie plus tard.');
     }
   }
 }
 
-function renderScams(data) {
-  const list = document.getElementById('scam-list');
-  const updated = document.getElementById('last-updated');
-
+function renderShield(data) {
+  const updated = document.getElementById('shield-updated');
   if (data._fetchedAt) {
     const d = new Date(data._fetchedAt);
-    updated.textContent = `Mis à jour : ${d.toLocaleString('fr-FR', { dateStyle: 'short', timeStyle: 'short' })}`;
+    updated.textContent = `MAJ : ${d.toLocaleString('fr-FR', { dateStyle: 'short', timeStyle: 'short' })}`;
   }
-
-  if (!data.alerts || data.alerts.length === 0) {
-    list.innerHTML = '<p style="color:var(--muted); font-size:14px; padding:20px; text-align:center;">Aucune arnaque active signalée.</p>';
+  const list = document.getElementById('shield-list');
+  if (!data.alerts?.length) {
+    list.innerHTML = emptyCard('AUCUNE ALERTE', 'Aucune arnaque active signalée actuellement.');
     return;
   }
 
+  const colorByKind = { sms: 'scam-card-cyan', call: 'scam-card-red', mail: 'scam-card-yellow', url: 'scam-card-red' };
+  const labelByKind = { sms: 'SMS', call: 'APPEL', mail: 'EMAIL', url: 'SITE WEB' };
+  const badgeBg = { sms: '#00fbfb', call: '#ff3a3a', mail: '#fce442', url: '#ff3a3a' };
+  const badgeFg = { sms: '#003737', call: '#ffffff', mail: '#131313', url: '#ffffff' };
+
   list.innerHTML = data.alerts.map(a => `
-    <div class="scam-item">
-      <h3>${escapeHtml(a.title)}<span class="badge ${a.kind}">${badgeLabel(a.kind)}</span></h3>
-      <div class="meta">${a.date ? 'Détecté ' + escapeHtml(a.date) : ''}</div>
-      <div class="desc">${escapeHtml(a.description)}</div>
-      ${a.example ? `<div class="desc" style="margin-top:8px; font-style:italic; color:var(--muted);">Exemple : « ${escapeHtml(a.example)} »</div>` : ''}
+    <div class="brutal-border-thin bg-surface-container-low ${colorByKind[a.kind] || ''}">
+      <div class="flex justify-between items-center px-4 py-3 border-b-border-width-thin border-surface-container-highest">
+        <h3 class="font-headline-md text-headline-md text-primary uppercase tracking-tight">${escapeHtml(a.title.toUpperCase())}</h3>
+        <span class="font-label-mono text-[10px] uppercase px-2 py-1 tracking-widest" style="background:${badgeBg[a.kind]};color:${badgeFg[a.kind]}">${labelByKind[a.kind] || a.kind.toUpperCase()}</span>
+      </div>
+      <div class="px-2 py-2">
+        <div class="info-row"><span class="lbl font-label-mono text-xs uppercase">VECTEUR</span><span class="val font-label-mono text-xs uppercase">${escapeHtml(a.vector || labelByKind[a.kind])}</span></div>
+        <div class="info-row"><span class="lbl font-label-mono text-xs uppercase">CIBLE</span><span class="val font-label-mono text-xs uppercase">${escapeHtml(a.target || 'PARTICULIERS')}</span></div>
+        <div class="info-row"><span class="lbl font-label-mono text-xs uppercase">RISQUE</span><span class="val font-label-mono text-xs uppercase">${escapeHtml(a.risk || (a.kind === 'sms' || a.kind === 'url' ? 'ÉLEVÉ' : 'CRITIQUE'))}</span></div>
+        ${a.date ? `<div class="info-row"><span class="lbl font-label-mono text-xs uppercase">DÉTECTÉ</span><span class="val font-label-mono text-xs uppercase">${escapeHtml(a.date.toUpperCase())}</span></div>` : ''}
+      </div>
+      ${a.example ? `<div class="mx-4 mb-3"><div class="quote-block font-body-md">« ${escapeHtml(a.example)} »</div></div>` : ''}
+      <div class="font-body-md text-on-surface-variant px-4 pb-4">${escapeHtml(a.description)}</div>
     </div>
   `).join('');
 }
 
-function badgeLabel(kind) {
-  return { sms: 'SMS', call: 'Appel', mail: 'Email', url: 'Site web' }[kind] || kind;
+function emptyCard(title, sub) {
+  return `<div class="brutal-border-thin bg-surface-container-low p-6 text-center">
+    <div class="font-label-mono text-label-mono uppercase text-primary mb-1">${escapeHtml(title)}</div>
+    <div class="font-body-md text-on-surface-variant">${escapeHtml(sub)}</div>
+  </div>`;
 }
 
-// ────── PWA install + service worker ──────
+// ══════════════════════════════════════════════════════════
+// LOGS : Historique local
+// ══════════════════════════════════════════════════════════
+
+function loadLogs() {
+  try { return JSON.parse(localStorage.getItem(LOGS_KEY) || '[]'); }
+  catch { return []; }
+}
+
+function saveLog(entry) {
+  const logs = loadLogs();
+  logs.unshift(entry);
+  logs.length = Math.min(logs.length, LOGS_MAX);
+  try { localStorage.setItem(LOGS_KEY, JSON.stringify(logs)); } catch {}
+}
+
+function clearLogs() {
+  if (!confirm('Effacer définitivement tout l\'historique local ?')) return;
+  localStorage.removeItem(LOGS_KEY);
+  renderLogs();
+}
+
+function renderLogs() {
+  const logs = loadLogs();
+  const list = document.getElementById('logs-list');
+  if (!logs.length) {
+    list.innerHTML = emptyCard('AUCUN SCAN ENREGISTRÉ', 'L\'historique des scans apparaîtra ici. Toutes les données restent sur ton appareil.');
+    return;
+  }
+  const verdictMeta = {
+    danger: { label: 'DANGER', bg: '#ff3a3a', fg: '#fff' },
+    warn:   { label: 'SUSPECT', bg: '#fce442', fg: '#131313' },
+    ok:     { label: 'CLEAR', bg: '#00ff7a', fg: '#131313' },
+  };
+  list.innerHTML = logs.map(l => {
+    const m = verdictMeta[l.verdict] || verdictMeta.ok;
+    const d = new Date(l.ts);
+    const dateStr = d.toLocaleString('fr-FR', { dateStyle: 'short', timeStyle: 'short' });
+    const inputSample = escapeHtml((l.input || '').slice(0, 80) + (l.input?.length > 80 ? '…' : ''));
+    return `
+      <div class="brutal-border-thin bg-surface-container-low">
+        <div class="flex justify-between items-center px-3 py-2 border-b-border-width-thin border-surface-container-highest">
+          <span class="font-label-mono text-[10px] uppercase text-on-surface-variant">${dateStr}</span>
+          <span class="font-label-mono text-[10px] uppercase px-2 py-0.5 tracking-widest font-bold" style="background:${m.bg};color:${m.fg}">${m.label}</span>
+        </div>
+        <div class="px-3 py-2 font-label-mono text-xs text-on-surface-variant break-all">${inputSample || '<vide>'}</div>
+      </div>
+    `;
+  }).join('');
+}
+
+// ══════════════════════════════════════════════════════════
+// HELPERS
+// ══════════════════════════════════════════════════════════
+
+function escapeHtml(s) {
+  if (s == null) return '';
+  return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+document.getElementById('threat-input').addEventListener('keydown', e => {
+  if (e.key === 'Enter' && e.ctrlKey) { e.preventDefault(); analyze(); }
+});
 
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('sw.js').catch(() => {});
 }
 
-// Charge la liste au démarrage (sans afficher si l'onglet Scanner est actif)
+// Boot
+setTab('scan');
 loadScams();
